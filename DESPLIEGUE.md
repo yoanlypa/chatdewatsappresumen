@@ -59,6 +59,7 @@ Para subir un chat desde el móvil: en WhatsApp, abre el chat → ⋮ → *Más*
 
 ## Si algo falla
 
+- **`The datasource.url property is required`**: `DATABASE_URL` llega vacía. En el servicio de la **app** → Variables, debe haber una `DATABASE_URL` con valor `${{Postgres.DATABASE_URL}}` (donde `Postgres` es el nombre real del servicio de la base de datos), y hay que pulsar **Deploy** para aplicar los cambios de variables. Desde esta versión el arranque lo avisa en claro.
 - **El despliegue no arranca y el log dice `Falta la variable SESSION_SECRET`**: añade esa variable (32+ caracteres).
 - **`Authentication failed` / no conecta a la base de datos**: revisa que `DATABASE_URL` sea una *Reference Variable* al servicio Postgres y que ambos servicios estén en el mismo proyecto.
 - **Railway no usa el comando de arranque**: en *Settings → Deploy → Custom Start Command* pon `npm run start:prod`, y en *Custom Build Command* pon `npm run build`.

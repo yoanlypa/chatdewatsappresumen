@@ -40,7 +40,7 @@
     "db:migrate": "prisma migrate deploy",
     "probar": "tsx scripts/probar.ts",
     "crear-usuario": "tsx scripts/crear-usuario.ts",
-    "start:prod": "prisma migrate deploy && tsx scripts/arranque.ts && next start",
+    "start:prod": "node scripts/comprobar-entorno.mjs && prisma migrate deploy && tsx scripts/arranque.ts && next start",
     "postinstall": "prisma generate"
   },
   "engines": {
