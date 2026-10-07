@@ -65,12 +65,12 @@ describe("validarRegistros · estado por día", () => {
 });
 
 describe("validarRegistros · cifras fuera de lo normal", () => {
-  it("una salida disparada es dudosa y no contagia a los días normales", () => {
+  it("unos entregados disparados son dudosos y no contagia a los días normales", () => {
     const { registros } = validar([...normales, reg("2026-09-09", 1000, 5)]);
     const estados = Object.fromEntries(registros.map((r) => [r.fecha, r.estado]));
     expect(estados["2026-09-09"]).toBe("dudoso");
     expect(registros.filter((r) => r.estado !== "ok")).toHaveLength(1);
-    expect(registros.find((r) => r.fecha === "2026-09-09")!.motivos.join()).toMatch(/Salida \(1000\)/);
+    expect(registros.find((r) => r.fecha === "2026-09-09")!.motivos.join()).toMatch(/Entregados \(995\)/);
   });
 
   it("con pocos días no hay referencia y no se marca nada", () => {

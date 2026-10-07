@@ -33,7 +33,7 @@ describe("chat iPhone con el estilo real de reporte", () => {
   });
 
   it("reconoce al repartidor aunque el archivo venga con guiones bajos y un número pegado", () => {
-    expect(nombreDesdeArchivo("WhatsApp_Chat_-_Fabian_Hijo_De_Anais2.zip")).toBe("Fabian Hijo De Anais2");
+    expect(nombreDesdeArchivo("WhatsApp_Chat_-_Pedro_Hijo_De_Luisa2.zip")).toBe("Pedro Hijo De Luisa2");
     const r = identificarRepartidor({
       nombreArchivo: "WhatsApp_Chat_-_Yoanly_Repartidor2.zip",
       remitentes: remitentesDe(msgs),
@@ -64,7 +64,7 @@ describe("el código deduce la vuelta y une los mensajes del día", () => {
     ]);
     expect(registros).toHaveLength(1);
     expect(registros[0]).toMatchObject({ salida: 39, vuelta: 5, estado: "ok", mensajeOriginal: "39 paq 1/7\n34 entreg" });
-    expect(registros[0].notaIa).toMatch(/deducida/);
+    expect(registros[0].notaIa).toBeNull(); // la deducción no genera notas: solo importan los entregados
   });
 
   it("un solo registro con salida y entregados (\"11 de 13\")", () => {
@@ -82,10 +82,15 @@ describe("el código deduce la vuelta y une los mensajes del día", () => {
     expect(registros[0]).toMatchObject({ salida: 19, vuelta: 3, estado: "ok" });
   });
 
-  it("solo entregados, sin salida → dudoso (falta la salida)", () => {
+  it("solo entregados, sin salida → ok: lo único que importa son los entregados", () => {
     const { registros } = validar([ia("2026-07-02", { entregados: 27 })]);
-    expect(registros[0].estado).toBe("dudoso");
-    expect(registros[0].motivos[0]).toMatch(/Falta la salida/);
+    expect(registros[0]).toMatchObject({ entregados: 27, salida: null, estado: "ok" });
+  });
+
+  it("solo salida, sin entregados ni vuelta → dudoso", () => {
+    const { registros } = validar([ia("2026-07-08", { salida: 9 })]);
+    expect(registros[0]).toMatchObject({ entregados: null, estado: "dudoso" });
+    expect(registros[0].motivos[0]).toMatch(/faltan los entregados/);
   });
 
   it("entregados mayores que la salida → error", () => {
@@ -111,5 +116,29 @@ describe("el código deduce la vuelta y une los mensajes del día", () => {
       ia("2026-07-03", { salida: 19, entregados: 16 }),
     ]);
     expect(calcularTotales(registros)).toMatchObject({ diasTrabajados: 2, totalEntregados: 50, totalVuelta: 8 });
+  });
+});
+
+describe("identificarRepartidor: el nombre real del remitente manda sobre el del archivo", () => {
+  const juan = remitentesDe(parsearChat(fixture("android_juan.txt")));
+
+  it("si el archivo lleva el nombre de la otra persona, no se confunde con ella", () => {
+    const r = identificarRepartidor({
+      nombreArchivo: "WhatsApp_Chat_-_Carlos_Jefe2.zip", // exportado desde el móvil del repartidor
+      remitentes: juan,
+      dueno: "Carlos Jefe",
+      repartidores: [{ id: 1, nombre: "Carlos Jefe", aliasWhatsapp: [] }],
+    });
+    expect(r).toEqual({ remitente: "Juan Pérez", nombreDetectado: "Juan Pérez", repartidorId: null });
+  });
+
+  it("si el archivo coincide con el remitente, también empareja por él", () => {
+    const r = identificarRepartidor({
+      nombreArchivo: "Chat de WhatsApp con Juan.txt",
+      remitentes: juan,
+      dueno: "Carlos Jefe",
+      repartidores: [{ id: 5, nombre: "Juan", aliasWhatsapp: [] }],
+    });
+    expect(r).toMatchObject({ remitente: "Juan Pérez", repartidorId: 5 });
   });
 });

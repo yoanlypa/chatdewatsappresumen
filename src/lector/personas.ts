@@ -63,27 +63,35 @@ export function identificarRepartidor(args: {
   const normArchivo = nombreArchivoDetectado ? normalizarNombre(nombreArchivoDetectado) : null;
   const normDueno = dueno ? normalizarNombre(dueno) : null;
 
+  // Variantes del nombre del archivo: tal cual y sin un número final pegado ("Fabian Hijo2" → "Fabian Hijo"),
+  // típico de las descargas duplicadas.
+  const variantes = normArchivo
+    ? [...new Set([normArchivo, normArchivo.replace(/\d+$/, "").trim()])].filter(Boolean)
+    : [];
+  const igual = (r: string) => variantes.includes(normalizarNombre(r));
+  // Tolerante: "Juan" encaja con "Juan Pérez" (todas las palabras del nombre están en el remitente).
+  const parecido = (r: string) => {
+    const ps = normalizarNombre(r).split(" ");
+    return variantes.some((v) => v.split(" ").every((p) => ps.includes(p)));
+  };
+
   let candidatos = remitentes.filter((r) => normalizarNombre(r) !== normDueno);
-  if (candidatos.length > 1 && normArchivo) {
-    // Variantes del nombre del archivo: tal cual y sin un número final pegado ("Fabian Hijo2" → "Fabian Hijo"),
-    // típico de las descargas duplicadas.
-    const variantes = [...new Set([normArchivo, normArchivo.replace(/\d+$/, "").trim()])].filter(Boolean);
-    const exacto = candidatos.filter((r) => variantes.includes(normalizarNombre(r)));
+  if (candidatos.length > 1) {
+    const exacto = candidatos.filter(igual);
     if (exacto.length === 1) candidatos = exacto;
     else {
-      // Tolerante: "Juan" encaja con "Juan Pérez" (todas las palabras del nombre están en el remitente).
-      const parcial = candidatos.filter((r) => {
-        const ps = normalizarNombre(r).split(" ");
-        return variantes.some((v) => v.split(" ").every((p) => ps.includes(p)));
-      });
+      const parcial = candidatos.filter(parecido);
       if (parcial.length === 1) candidatos = parcial;
     }
   }
   const remitente = candidatos.length === 1 ? candidatos[0] : null;
 
+  // El remitente es el nombre real que sale en el chat. El nombre del archivo solo se usa si coincide con él
+  // (o si no se pudo identificar al remitente).
+  const archivoCoincide = remitente !== null && (igual(remitente) || parecido(remitente));
   const nombres = new Set<string>();
-  if (normArchivo) nombres.add(normArchivo);
   if (remitente) nombres.add(normalizarNombre(remitente));
+  if (normArchivo && (!remitente || archivoCoincide)) nombres.add(normArchivo);
 
   const coincide = repartidores.find((r) =>
     [r.nombre, ...r.aliasWhatsapp].some((n) => nombres.has(normalizarNombre(n))),
@@ -91,7 +99,7 @@ export function identificarRepartidor(args: {
 
   return {
     remitente,
-    nombreDetectado: nombreArchivoDetectado ?? remitente,
+    nombreDetectado: remitente ?? nombreArchivoDetectado,
     repartidorId: coincide?.id ?? null,
   };
 }

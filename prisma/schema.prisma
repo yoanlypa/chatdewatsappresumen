@@ -101,7 +101,11 @@ model RegistroDia {
   fecha           DateTime       @db.Date
   salida          Int?
   vuelta          Int?
+  // Entregados: lo único que importa para el pago. Salida − vuelta, o lo que diga el repartidor.
+  entregados      Int?
   estado          EstadoRegistro @default(ok)
+  // Por qué el día es dudoso o erróneo (se muestra en la revisión).
+  motivos         String[]       @default([])
   notaIa          String?        @map("nota_ia")
   mensajeOriginal String?        @map("mensaje_original")
   editadoManual   Boolean        @default(false) @map("editado_manual")

@@ -11,13 +11,16 @@ Next.js (App Router) + TypeScript, Tailwind, Prisma + PostgreSQL, SDK oficial de
 
 ## Comandos útiles
 - `npm run dev` — servidor de desarrollo
-- `npm test` — tests (Vitest)
+- `npm test` — tests (Vitest); los de `tests/db.test.ts` necesitan el Postgres local y se omiten si no está
 - `npm run typecheck` — comprobación de tipos
 - `npm run db:generate` / `npm run db:migrate` — cliente Prisma / aplicar migraciones
 - `docker compose up -d` — Postgres local en el puerto 5433 (necesita Docker Desktop arrancado)
 - `npm run probar -- chat.txt [--mes AAAA-MM] [--repartidor X] [--sin-ia]` — prueba de extremo a extremo por consola (necesita ANTHROPIC_API_KEY en .env, salvo --sin-ia)
 
 ## Estructura
+- `src/app/` — pantallas (Next.js App Router): meses, importar, repartidores, ajustes, rutas `/api/importar/*` y acciones de servidor (`actions.ts`)
+- `src/components/` — componentes de cliente (importación, editor de detalle, formularios)
+- `src/lib/` — acceso a datos: importar, consultas, registros, empresa, fechas
 - `src/lector/` — lector de chats (sin IA): parser, zip, identificación de dueño/repartidor
 - `tests/` y `tests/fixtures/` — tests Vitest y chats de ejemplo (Android 24 h/12 h, iPhone)
 - `src/ia/` — extracción con IA (tool use + zod); `src/validacion/` — estados ok/dudoso/error; `src/calculo/` — entregados y totales (siempre en código)
@@ -25,6 +28,9 @@ Next.js (App Router) + TypeScript, Tailwind, Prisma + PostgreSQL, SDK oficial de
 - `prisma/` — esquema y migraciones (Prisma 7, ver Decisiones en SPEC.md)
 
 ## Convenciones
+- Next.js 16: `params`/`searchParams` son Promesas (hay que hacer `await`); lee `node_modules/next/dist/docs/` antes de usar una API que no conozcas.
+- Solo importan los **entregados**; las incidencias se ignoran.
+- Aún no hay login (Fase 5): no exponer la app en internet.
 - Interfaz y comunicación en español.
 - Trabajo por fases (SPEC.md sección 11): al terminar, tests pasando + commit + resumen corto.
 - Decisiones propias → sección "Decisiones" de SPEC.md, con fecha.

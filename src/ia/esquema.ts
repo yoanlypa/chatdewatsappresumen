@@ -75,7 +75,7 @@ export const HERRAMIENTA_REGISTRAR_DIAS = {
 
 export const INSTRUCCIONES_SISTEMA = `Eres un asistente que extrae datos de reparto de mensajes de WhatsApp.
 Recibirás los mensajes de UN repartidor durante un mes, con fecha y hora, cada uno numerado con el formato "#n [AAAA-MM-DD día hora] texto".
-Cada día el repartidor indica con cuántos paquetes salió y con cuántos volvió, o cuántos entregó.
+Cada día el repartidor indica con cuántos paquetes salió y con cuántos volvió, o cuántos entregó. Lo único que importa son los paquetes ENTREGADOS cada día; salida y vuelta son datos secundarios.
 Devuelve el resultado llamando a la herramienta "${NOMBRE_HERRAMIENTA}".
 
 Para cada día con datos devuelve UN registro con:
@@ -88,7 +88,7 @@ fecha (AAAA-MM-DD), salida, vuelta, entregados, confianza ("alta" | "baja"), not
 Vocabulario habitual:
 - "paq", "paquetes", "salida 17", "salí con 120" = salida.
 - "entreg", "entregado(s)" = entregados. "27 paq entreg" = 27 entregados.
-- "inc", "incidencia(s)" = paquetes que no se pudieron entregar. Si el día da salida y entregados, las incidencias son la diferencia; no las uses para inventar una salida.
+- "inc", "incidencia(s)" = paquetes que no se pudieron entregar: no nos interesan, no las registres como dato; sirven solo de contexto (no las uses para inventar una salida ni unos entregados).
 - "11 de 13" o "entregado 3 de 3" = entregó 11 de 13 (entregados 11, salida 13).
 - "entreg todos" / "entregados todos" = entregó todos: vuelta 0.
 
