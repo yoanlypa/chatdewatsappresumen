@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { obtenerEmpresa } from "@/lib/empresa";
+import { obtenerEmpresaApi } from "@/lib/empresa";
 import { analizarArchivos } from "@/lib/importar";
 import { esAnioMes } from "@/lib/fechas";
 
@@ -24,7 +24,8 @@ export async function POST(request: Request) {
   const archivos = await Promise.all(
     ficheros.map(async (f) => ({ nombre: f.name, datos: new Uint8Array(await f.arrayBuffer()) })),
   );
-  const empresa = await obtenerEmpresa();
+  const empresa = await obtenerEmpresaApi();
+  if (!empresa) return NextResponse.json({ error: "No has iniciado sesión." }, { status: 401 });
   const dueno = String(form.get("dueno") ?? "").trim() || null;
   const analisis = await analizarArchivos(prisma, empresa.id, archivos, anioMes, dueno);
 

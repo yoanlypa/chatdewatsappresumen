@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cerrarSesionAction } from "@/app/login/actions";
 
 const ENLACES = [
   { href: "/meses", etiqueta: "Meses", icono: "📅" },
@@ -13,6 +14,7 @@ const ENLACES = [
 export function Nav() {
   const ruta = usePathname();
   const activo = (href: string) => ruta === href || ruta.startsWith(`${href}/`);
+  if (ruta === "/login") return null;
 
   return (
     <>
@@ -35,6 +37,9 @@ export function Nav() {
               </Link>
             ))}
           </nav>
+          <form action={cerrarSesionAction} className="ml-auto">
+            <button type="submit" className="rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100">Salir</button>
+          </form>
         </div>
       </header>
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { obtenerEmpresa } from "@/lib/empresa";
+import { obtenerEmpresaApi } from "@/lib/empresa";
 import { ErrorImportacion, procesarArchivo } from "@/lib/importar";
 import { esAnioMes } from "@/lib/fechas";
 
@@ -21,7 +21,8 @@ export async function POST(request: Request) {
   }
   if (archivo.size > MAX_BYTES) return NextResponse.json({ error: "El archivo supera los 25 MB." }, { status: 400 });
 
-  const empresa = await obtenerEmpresa();
+  const empresa = await obtenerEmpresaApi();
+  if (!empresa) return NextResponse.json({ error: "No has iniciado sesión." }, { status: 401 });
   try {
     const resultado = await procesarArchivo(
       prisma,

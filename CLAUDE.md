@@ -15,6 +15,7 @@ Next.js (App Router) + TypeScript, Tailwind, Prisma + PostgreSQL, SDK oficial de
 - `npm run typecheck` — comprobación de tipos
 - `npm run db:generate` / `npm run db:migrate` — cliente Prisma / aplicar migraciones
 - `docker compose up -d` — Postgres local en el puerto 5433 (necesita Docker Desktop arrancado)
+- `npm run crear-usuario -- email "contraseña"` — crea el usuario del dueño
 - `npm run probar -- chat.txt [--mes AAAA-MM] [--repartidor X] [--sin-ia]` — prueba de extremo a extremo por consola (necesita ANTHROPIC_API_KEY en .env, salvo --sin-ia)
 
 ## Estructura
@@ -30,7 +31,8 @@ Next.js (App Router) + TypeScript, Tailwind, Prisma + PostgreSQL, SDK oficial de
 ## Convenciones
 - Next.js 16: `params`/`searchParams` son Promesas (hay que hacer `await`); lee `node_modules/next/dist/docs/` antes de usar una API que no conozcas.
 - Solo importan los **entregados**; las incidencias se ignoran.
-- Aún no hay login (Fase 5): no exponer la app en internet.
+- Login con cookie firmada (`src/proxy.ts`, `src/lib/auth.ts`). Toda página, acción de servidor y ruta API debe obtener la empresa con `obtenerEmpresa()` / `obtenerEmpresaApi()`; nunca recibir el `empresaId` del cliente.
+- Despliegue en Railway: ver `DESPLIEGUE.md`. Variables: `DATABASE_URL`, `ANTHROPIC_API_KEY`, `SESSION_SECRET`, `ADMIN_EMAIL`/`ADMIN_PASSWORD` (solo el primer arranque).
 - Interfaz y comunicación en español.
 - Trabajo por fases (SPEC.md sección 11): al terminar, tests pasando + commit + resumen corto.
 - Decisiones propias → sección "Decisiones" de SPEC.md, con fecha.

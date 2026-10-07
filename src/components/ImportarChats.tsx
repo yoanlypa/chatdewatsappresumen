@@ -39,6 +39,7 @@ export function ImportarChats({ mesInicial }: { mesInicial: string }) {
       if (dueno) form.set("dueno", dueno);
       if (guardar) form.set("guardarDueno", "1");
       const r = await fetch("/api/importar/analizar", { method: "POST", body: form });
+      if (r.status === 401) return void (window.location.href = "/login?volver=/importar");
       const datos = await r.json();
       if (!r.ok) throw new Error(datos.error ?? "No se pudieron leer los archivos.");
       setAnalisis(datos);
@@ -70,6 +71,7 @@ export function ImportarChats({ mesInicial }: { mesInicial: string }) {
           form.set("archivo", ficheros[i]);
           if (analisis.dueno) form.set("dueno", analisis.dueno);
           const r = await fetch("/api/importar/procesar", { method: "POST", body: form });
+          if (r.status === 401) return void (window.location.href = "/login?volver=/importar");
           const datos = await r.json();
           cambiar(i, r.ok ? { fase: "ok", resultado: datos } : { fase: "error", mensaje: datos.error ?? "Error al procesar." });
         } catch {
