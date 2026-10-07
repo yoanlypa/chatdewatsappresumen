@@ -7,7 +7,7 @@ App web mobile-first para que el dueño de una empresa de reparto suba los chats
 Regla clave: el código lee, la IA interpreta (solo extrae salida/vuelta por día), el código suma. Ningún total ni importe lo calcula la IA.
 
 ## Stack
-Next.js (App Router) + TypeScript, Tailwind, Prisma + PostgreSQL, SDK oficial de Anthropic (`claude-haiku-4-5-20251001`), zod, exceljs, jszip, Vitest. Despliegue en Railway. Repo GitHub: `yoanlypa`.
+Next.js (App Router) + TypeScript, Tailwind, Prisma + PostgreSQL, SDK oficial de Anthropic (modelo por defecto `claude-sonnet-5-5`, configurable con `ANTHROPIC_MODEL`; ver Decisiones), zod, exceljs, jszip, Vitest. Despliegue en Railway. Repo GitHub: `yoanlypa`.
 
 ## Comandos útiles
 - `npm run dev` — servidor de desarrollo

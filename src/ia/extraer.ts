@@ -9,8 +9,8 @@ import {
 } from "./esquema";
 import { formatearMensajes } from "./preparar";
 
-/** Haiku 4.5 (alias de claude-haiku-4-5-20251001). Se puede cambiar con ANTHROPIC_MODEL. */
-export const MODELO_POR_DEFECTO = "claude-haiku-4-5";
+/** Sonnet 5.5: en un chat real superó a Haiku 4.5 y 5.5 (ver Decisiones en SPEC.md). Se puede cambiar con ANTHROPIC_MODEL. */
+export const MODELO_POR_DEFECTO = "claude-sonnet-5-5";
 
 /** Parte mínima del cliente de Anthropic que usamos (facilita los tests). */
 export interface ClienteIA {
@@ -33,6 +33,21 @@ export interface ResultadoExtraccion {
 }
 
 export class ErrorExtraccion extends Error {}
+
+/** Fable 5.x, Opus 5.5 y Sonnet 5.5 rechazan forzar la herramienta (400): con ellos se usa "auto" y el prompt la pide. */
+export function admiteHerramientaForzada(modelo: string): boolean {
+  return !/fable|mythos|opus-5-5|sonnet-5-5/.test(modelo);
+}
+
+/** Texto real de los mensajes citados por la IA (números desde 1), con su fecha y hora. */
+export function textoOriginal(mensajes: Mensaje[], numeros: number[]): string {
+  return [...new Set(numeros)]
+    .sort((a, b) => a - b)
+    .map((n) => mensajes[n - 1])
+    .filter((m): m is Mensaje => !!m)
+    .map((m) => `${m.fechaHora.slice(8, 10)}/${m.fechaHora.slice(5, 7)} ${m.fechaHora.slice(11, 16)} · ${m.texto}`)
+    .join("\n");
+}
 
 /** Una llamada por repartidor y mes. Sale con tool use, se valida con zod y se reintenta una vez. */
 export async function extraerRegistros(
@@ -57,7 +72,7 @@ export async function extraerRegistros(
       max_tokens: 16000,
       system: INSTRUCCIONES_SISTEMA,
       tools: [HERRAMIENTA_REGISTRAR_DIAS],
-      tool_choice: { type: "tool", name: NOMBRE_HERRAMIENTA },
+      tool_choice: admiteHerramientaForzada(modelo) ? { type: "tool", name: NOMBRE_HERRAMIENTA } : { type: "auto" },
       messages: conversacion,
     });
     uso.llamadas++;
@@ -77,7 +92,10 @@ export async function extraerRegistros(
 
     const analisis = RespuestaIASchema.safeParse(bloque.input);
     if (analisis.success) {
-      const todos = analisis.data.registros;
+      const todos = analisis.data.registros.map(({ mensajes: numeros, ...r }): RegistroIA => ({
+        ...r,
+        mensaje_original: textoOriginal(mensajes, numeros),
+      }));
       const registros = todos.filter((r) => r.fecha.startsWith(anioMes));
       return { registros, descartados: todos.filter((r) => !r.fecha.startsWith(anioMes)), uso };
     }

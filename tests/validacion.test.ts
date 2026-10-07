@@ -3,6 +3,7 @@ import type { RegistroIA } from "@/ia/esquema";
 import { validarRegistros } from "@/validacion/validar";
 
 const reg = (fecha: string, salida: number | null, vuelta: number | null, extra: Partial<RegistroIA> = {}): RegistroIA => ({
+  entregados: null,
   fecha,
   salida,
   vuelta,
@@ -77,10 +78,10 @@ describe("validarRegistros · cifras fuera de lo normal", () => {
     expect(registros.every((r) => r.estado === "ok")).toBe(true);
   });
 
-  it("el umbral es configurable", () => {
-    const rs = [...normales, reg("2026-09-09", 140, 5)];
+  it("el factor es configurable", () => {
+    const rs = [...normales, reg("2026-09-09", 250, 5)];
     expect(validar(rs).registros.every((r) => r.estado === "ok")).toBe(true);
-    expect(validar(rs, { umbralDesviacion: 0.2 }).registros.find((r) => r.fecha === "2026-09-09")!.estado).toBe("dudoso");
+    expect(validar(rs, { factorAtipico: 2 }).registros.find((r) => r.fecha === "2026-09-09")!.estado).toBe("dudoso");
   });
 });
 

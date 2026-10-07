@@ -34,7 +34,12 @@ const PATRONES_NOMBRE = [
 /** Extrae el nombre del contacto de "Chat de WhatsApp con Juan.txt" y variantes. */
 export function nombreDesdeArchivo(nombreArchivo: string): string | null {
   const base = nombreArchivo.split(/[\\/]/).pop() ?? nombreArchivo;
-  const sinExt = base.replace(/\.(txt|zip)$/i, "").replace(/\s*\(\d+\)$/, "").trim();
+  const sinExt = base
+    .replace(/\.(txt|zip)$/i, "")
+    .replace(/_/g, " ") // al descargar, los espacios pueden pasar a guiones bajos
+    .replace(/\s*\(\d+\)$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
   for (const re of PATRONES_NOMBRE) {
     const m = sinExt.match(re);
     if (m) return m[1].trim();

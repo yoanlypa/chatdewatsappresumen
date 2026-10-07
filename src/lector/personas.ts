@@ -65,14 +65,16 @@ export function identificarRepartidor(args: {
 
   let candidatos = remitentes.filter((r) => normalizarNombre(r) !== normDueno);
   if (candidatos.length > 1 && normArchivo) {
-    const porArchivo = candidatos.filter((r) => normalizarNombre(r) === normArchivo);
-    if (porArchivo.length === 1) candidatos = porArchivo;
+    // Variantes del nombre del archivo: tal cual y sin un número final pegado ("Fabian Hijo2" → "Fabian Hijo"),
+    // típico de las descargas duplicadas.
+    const variantes = [...new Set([normArchivo, normArchivo.replace(/\d+$/, "").trim()])].filter(Boolean);
+    const exacto = candidatos.filter((r) => variantes.includes(normalizarNombre(r)));
+    if (exacto.length === 1) candidatos = exacto;
     else {
       // Tolerante: "Juan" encaja con "Juan Pérez" (todas las palabras del nombre están en el remitente).
-      const palabras = normArchivo.split(" ");
       const parcial = candidatos.filter((r) => {
         const ps = normalizarNombre(r).split(" ");
-        return palabras.every((p) => ps.includes(p));
+        return variantes.some((v) => v.split(" ").every((p) => ps.includes(p)));
       });
       if (parcial.length === 1) candidatos = parcial;
     }

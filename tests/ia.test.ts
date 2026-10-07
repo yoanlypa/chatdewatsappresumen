@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type Anthropic from "@anthropic-ai/sdk";
 import { parsearChat } from "@/lector";
-import { ErrorExtraccion, extraerRegistros, type ClienteIA } from "@/ia/extraer";
+import { ErrorExtraccion, admiteHerramientaForzada, extraerRegistros, textoOriginal, type ClienteIA } from "@/ia/extraer";
 import { formatearMensajes, mensajesParaIA } from "@/ia/preparar";
 import { NOMBRE_HERRAMIENTA } from "@/ia/esquema";
 import { validarRegistros } from "@/validacion/validar";
@@ -32,12 +32,13 @@ const clienteCon = (...respuestas: Anthropic.Message[]) => {
 };
 
 const r = (fecha: string, salida: number | null, vuelta: number | null) => ({
+  entregados: null,
   fecha,
   salida,
   vuelta,
   confianza: "alta" as const,
   nota: null,
-  mensaje_original: `${salida}/${vuelta}`,
+  mensajes: [1],
 });
 
 describe("mensajesParaIA / formatearMensajes", () => {
@@ -46,11 +47,15 @@ describe("mensajesParaIA / formatearMensajes", () => {
     { fechaHora: "2026-10-01T00:30:00", remitente: "Juan", texto: "ayer 90/4" },
     { fechaHora: "2026-10-01T21:00:00", remitente: "Juan", texto: "95/5" },
     { fechaHora: "2026-09-30T22:00:00", remitente: "Jefe", texto: "ok" },
+    { fechaHora: "2026-10-02T09:00:00", remitente: "Juan", texto: "Entreg 30 1/10" },
+    { fechaHora: "2026-10-04T09:00:00", remitente: "Juan", texto: "Salida 20 4/10" },
+    { fechaHora: "2026-09-15T10:00:00", remitente: "Juan", texto: "Y0321682h" },
+    { fechaHora: "2026-09-15T10:01:00", remitente: "Juan", texto: "Salida 20 15/9" },
   ];
 
-  it("solo envía mensajes del repartidor y del mes, más la madrugada del día 1 siguiente", () => {
+  it("envía solo al repartidor, el mes y los 3 primeros días del siguiente, sin mensajes que son solo un código", () => {
     const sel = mensajesParaIA(msgs, "Juan", "2026-09");
-    expect(sel.map((m) => m.texto)).toEqual(["100/5", "ayer 90/4"]);
+    expect(sel.map((m) => m.texto)).toEqual(["100/5", "Salida 20 15/9", "ayer 90/4", "95/5", "Entreg 30 1/10"]);
   });
 
   it("formatea con fecha, día de la semana y hora, y sangra las líneas siguientes", () => {
@@ -63,18 +68,53 @@ describe("mensajesParaIA / formatearMensajes", () => {
   });
 });
 
+describe("textoOriginal", () => {
+  const msgs = [
+    { fechaHora: "2026-07-01T11:22:10", remitente: "Y", texto: "39 paq 1/7" },
+    { fechaHora: "2026-07-01T18:59:00", remitente: "Y", texto: "34 entreg" },
+  ];
+  it("pone el texto real de los mensajes citados, sin duplicados y en orden", () => {
+    expect(textoOriginal(msgs, [2, 1, 2])).toBe("01/07 11:22 · 39 paq 1/7\n01/07 18:59 · 34 entreg");
+  });
+  it("ignora números que no existen", () => {
+    expect(textoOriginal(msgs, [9, 1])).toBe("01/07 11:22 · 39 paq 1/7");
+    expect(textoOriginal(msgs, [])).toBe("");
+  });
+});
+
+describe("modelos y herramienta forzada", () => {
+  it.each([
+    ["claude-haiku-4-5", true],
+    ["claude-haiku-5-5", true],
+    ["claude-sonnet-5-5", false],
+    ["claude-opus-5-5", false],
+    ["claude-fable-5-1", false],
+  ])("%s → herramienta forzada: %s", (modelo, esperado) => {
+    expect(admiteHerramientaForzada(modelo)).toBe(esperado);
+  });
+});
+
 describe("extraerRegistros", () => {
   const msgs = [{ fechaHora: "2026-09-01T21:15:00", remitente: "Juan", texto: "120/8" }];
 
-  it("pide salida estructurada con tool_choice forzado y devuelve los registros validados", async () => {
+  it("pide salida estructurada con tool_choice forzado (Haiku) y devuelve los registros validados", async () => {
     const { cliente, create } = clienteCon(respuestaHerramienta({ registros: [r("2026-09-01", 120, 8)] }));
-    const res = await extraerRegistros(msgs, "2026-09", { cliente });
-    expect(res.registros).toEqual([r("2026-09-01", 120, 8)]);
+    const res = await extraerRegistros(msgs, "2026-09", { cliente, modelo: "claude-haiku-4-5" });
+    const { mensajes: _m, ...esperado } = r("2026-09-01", 120, 8);
+    expect(res.registros).toEqual([{ ...esperado, mensaje_original: "01/09 21:15 · 120/8" }]);
     expect(res.uso).toEqual({ entrada: 100, salida: 50, llamadas: 1 });
     const params = create.mock.calls[0][0];
     expect(params.tool_choice).toEqual({ type: "tool", name: NOMBRE_HERRAMIENTA });
     expect(params.model).toBe("claude-haiku-4-5");
     expect(params.system).toMatch(/NO calcules totales/);
+  });
+
+  it("por defecto usa Sonnet 5.5 con tool_choice auto (no admite forzarla)", async () => {
+    const { cliente, create } = clienteCon(respuestaHerramienta({ registros: [] }));
+    await extraerRegistros(msgs, "2026-09", { cliente });
+    const params = create.mock.calls[0][0];
+    expect(params.model).toBe("claude-sonnet-5-5");
+    expect(params.tool_choice).toEqual({ type: "auto" });
   });
 
   it("descarta registros fuera del mes y los devuelve aparte", async () => {
@@ -124,7 +164,7 @@ describe("flujo completo con el chat de ejemplo (IA simulada)", () => {
   it("los totales coinciden con la suma manual", async () => {
     const mensajes = parsearChat(fixture("android_juan.txt"));
     const paraIA = mensajesParaIA(mensajes, "Juan Pérez", "2026-09");
-    expect(paraIA).toHaveLength(12);
+    expect(paraIA).toHaveLength(13); // 12 del mes + "Salí con 90, volví con 2" del 1/10 (margen)
 
     // Lo que devolvería una IA correcta para ese chat (corrección del 4, entregados del 5, madrugada del 10).
     const salidaIA = [

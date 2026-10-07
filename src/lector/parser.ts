@@ -9,6 +9,12 @@ const CABECERA_ANDROID = new RegExp(String.raw`^${FECHA},?\s+${HORA}\s+-\s+(.*)$
 // iPhone: `[07/10/26, 21:15:03] Juan: texto`
 const CABECERA_IOS = new RegExp(String.raw`^\[${FECHA},?\s+${HORA}\]\s+(.*)$`, "i");
 
+// En iPhone, una foto con pie llega como "texto imagen omitida" (o con <adjunto: …>): se queda el pie.
+const MARCA_MEDIA_EN_TEXTO = new RegExp(
+  String.raw`\s*(?:<?(?:multimedia|imagen|audio|v[ií]deo|sticker|gif|documento|contacto)\s+omitid[oa]s?>?|<(?:adjunto|attached):[^>]*>)`,
+  "gi",
+);
+
 const MARCA_EDITADO =
   /\s*<(?:se editó este mensaje|mensaje editado|this message was edited)\.?>\s*$/i;
 
@@ -63,7 +69,11 @@ function cerrar(p: Pendiente, salida: Mensaje[]): void {
   const sep = completo.indexOf(": ");
   if (sep < 0) return; // sin remitente: mensaje de sistema
   const remitente = completo.slice(0, sep).trim();
-  const texto = completo.slice(sep + 2).replace(MARCA_EDITADO, "").trim();
+  const texto = completo
+    .slice(sep + 2)
+    .replace(MARCA_EDITADO, "")
+    .replace(MARCA_MEDIA_EN_TEXTO, "") // foto con pie de texto: "Dejado en recepción imagen omitida"
+    .trim();
   if (!remitente || !texto || esIgnorable(texto)) return;
   salida.push({ fechaHora: p.fechaHora, remitente, texto });
 }
