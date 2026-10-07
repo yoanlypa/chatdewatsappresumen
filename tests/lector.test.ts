@@ -169,6 +169,16 @@ describe("dueño y repartidor", () => {
     expect(r).toEqual({ remitente: "Juan Pérez", nombreDetectado: "Juan Pérez", repartidorId: null });
   });
 
+  it("tolera nombres parciales: Juan encaja con Juan Pérez", () => {
+    const r = identificarRepartidor({
+      nombreArchivo: "Chat de WhatsApp con Juan.txt",
+      remitentes: juan,
+      dueno: null,
+      repartidores: [],
+    });
+    expect(r.remitente).toBe("Juan Pérez");
+  });
+
   it("empareja con un repartidor existente por alias", () => {
     const r = identificarRepartidor({
       nombreArchivo: "Chat de WhatsApp con Juanito moto.txt",

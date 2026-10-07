@@ -14,12 +14,14 @@ Next.js (App Router) + TypeScript, Tailwind, Prisma + PostgreSQL, SDK oficial de
 - `npm test` — tests (Vitest)
 - `npm run typecheck` — comprobación de tipos
 - `npm run db:generate` / `npm run db:migrate` — cliente Prisma / aplicar migraciones
-- `docker compose up -d` — Postgres local (necesita Docker Desktop arrancado)
-- `npm run probar -- chat.txt` — prueba de extracción por consola (Fase 2, pendiente)
+- `docker compose up -d` — Postgres local en el puerto 5433 (necesita Docker Desktop arrancado)
+- `npm run probar -- chat.txt [--mes AAAA-MM] [--repartidor X] [--sin-ia]` — prueba de extremo a extremo por consola (necesita ANTHROPIC_API_KEY en .env, salvo --sin-ia)
 
 ## Estructura
 - `src/lector/` — lector de chats (sin IA): parser, zip, identificación de dueño/repartidor
 - `tests/` y `tests/fixtures/` — tests Vitest y chats de ejemplo (Android 24 h/12 h, iPhone)
+- `src/ia/` — extracción con IA (tool use + zod); `src/validacion/` — estados ok/dudoso/error; `src/calculo/` — entregados y totales (siempre en código)
+- `scripts/probar.ts` — script de consola
 - `prisma/` — esquema y migraciones (Prisma 7, ver Decisiones en SPEC.md)
 
 ## Convenciones

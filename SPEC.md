@@ -186,3 +186,12 @@ Decisiones
 - **2026-10-07 · Empresa guarda `remitente_dueno` y `dias_laborables`** (ajustes de empresa; por defecto lunes a sábado).
 - **2026-10-07 · Tarifas** en `repartidores`: `tarifa_paquete`, `tarifa_dia`, `tarifa_fija` (según `tipo_tarifa`). `registros_dia` es único por (repartidor, fecha).
 - **2026-10-07 · PDF con `pdfkit`** (se instalará en la Fase 4). `zod`, `exceljs` y el SDK de Anthropic se añaden cuando se necesiten.
+- **2026-10-07 · Modelo de IA: alias `claude-haiku-4-5`** (mismo modelo que `claude-haiku-4-5-20251001`, sin fijar la fecha de la versión). Configurable con la variable `ANTHROPIC_MODEL`. Nota: existe `claude-haiku-5-5` (más barato por token); se puede probar con `ANTHROPIC_MODEL` para comparar calidad.
+- **2026-10-07 · Salida estructurada con tool use** (`registrar_dias`, `tool_choice` forzado, válido en Haiku 4.5). Si la respuesta no pasa zod, se reintenta una vez devolviendo el error a la IA como `tool_result` con `is_error`.
+- **2026-10-07 · Instrucciones al modelo:** el prompt del SPEC más una regla: si hay dos datos distintos el mismo día sin poder decidir, devolver ambos registros con confianza baja (así el código puede marcarlo como dudoso, como pide la sección 6).
+- **2026-10-07 · Margen de madrugada:** a la IA se envían también los mensajes 00:00–05:59 del día 1 del mes siguiente (pueden referirse al último día del mes). El código descarta cualquier registro con fecha fuera del mes. Resuelve la decisión pendiente de la Fase 1.
+- **2026-10-07 · Cifras atípicas: mediana, no media.** Se compara la salida y los entregados de cada día con la mediana de los demás días válidos (mínimo 4 días; desvío > 50 %, configurable). Con la media, un solo valor disparado haría dudosos a todos los demás.
+- **2026-10-07 · Aviso de día laborable sin datos** = día laborable sin ningún registro de la IA (no distingue si el repartidor escribió algo que no hablaba de paquetes).
+- **2026-10-07 · Totales:** solo entran en el total los días con salida y vuelta presentes y coherentes (vuelta ≤ salida). Los días dudosos con ambos datos sí cuentan (se ven marcados); los incompletos o con error se excluyen y se cuentan aparte (`diasExcluidos`).
+- **2026-10-07 · Postgres local en el puerto 5433.** En este PC ya hay un PostgreSQL nativo de Windows en el 5432, así que el de Docker (`docker-compose.yml`) usa el 5433.
+- **2026-10-07 · Script `npm run probar`** (`scripts/probar.ts`, sin base de datos): `--mes`, `--repartidor`, `--dueno`, `--sin-ia` (ver lo que se enviaría), `--json`.

@@ -67,6 +67,15 @@ export function identificarRepartidor(args: {
   if (candidatos.length > 1 && normArchivo) {
     const porArchivo = candidatos.filter((r) => normalizarNombre(r) === normArchivo);
     if (porArchivo.length === 1) candidatos = porArchivo;
+    else {
+      // Tolerante: "Juan" encaja con "Juan Pérez" (todas las palabras del nombre están en el remitente).
+      const palabras = normArchivo.split(" ");
+      const parcial = candidatos.filter((r) => {
+        const ps = normalizarNombre(r).split(" ");
+        return palabras.every((p) => ps.includes(p));
+      });
+      if (parcial.length === 1) candidatos = parcial;
+    }
   }
   const remitente = candidatos.length === 1 ? candidatos[0] : null;
 
