@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TipoTarifa {
+  POR_PAQUETE
+  POR_DIA
+  FIJO_MAS_VARIABLE
+}
+
+enum EstadoMes {
+  ABIERTO
+  CERRADO
+}
+
+enum EstadoRegistro {
+  ok
+  dudoso
+  error
+}
+
+enum EstadoImportacion {
+  PENDIENTE
+  PROCESADA
+  ERROR
+}
+
+model Empresa {
+  id                  Int      @id @default(autoincrement())
+  nombre              String
+  // Remitente de WhatsApp que corresponde al dueño (se confirma la primera vez).
+  remitenteDueno      String?  @map("remitente_dueno")
+  // Días laborables: 0 = domingo ... 6 = sábado. Por defecto lunes a sábado.
+  diasLaborables      Int[]    @default([1, 2, 3, 4, 5, 6]) @map("dias_laborables")
+  creadaEn            DateTime @default(now()) @map("creada_en")
+
+  usuarios      Usuario[]
+  repartidores  Repartidor[]
+  meses         Mes[]
+  importaciones Importacion[]
+
+  @@map("empresas")
+}
+
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  empresaId    Int      @map("empresa_id")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  creadoEn     DateTime @default(now()) @map("creado_en")
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@map("usuarios")
+}
+
+model Repartidor {
+  id             Int        @id @default(autoincrement())
+  empresaId      Int        @map("empresa_id")
+  nombre         String
+  aliasWhatsapp  String[]   @default([]) @map("alias_whatsapp")
+  tipoTarifa     TipoTarifa @default(POR_PAQUETE) @map("tipo_tarifa")
+  // Importes en euros. Se usan según el tipo de tarifa.
+  tarifaPaquete  Decimal    @default(0) @map("tarifa_paquete") @db.Decimal(10, 4)
+  tarifaDia      Decimal    @default(0) @map("tarifa_dia") @db.Decimal(10, 2)
+  tarifaFija     Decimal    @default(0) @map("tarifa_fija") @db.Decimal(10, 2)
+  activo         Boolean    @default(true)
+
+  empresa       Empresa       @relation(fields: [empresaId], references: [id])
+  registros     RegistroDia[]
+  ajustes       Ajuste[]
+  importaciones Importacion[]
+
+  @@index([empresaId])
+  @@map("repartidores")
+}
+
+model Mes {
+  id        Int       @id @default(autoincrement())
+  empresaId Int       @map("empresa_id")
+  // Formato "AAAA-MM".
+  anioMes   String    @map("anio_mes")
+  estado    EstadoMes @default(ABIERTO)
+
+  empresa Empresa  @relation(fields: [empresaId], references: [id])
+  ajustes Ajuste[]
+
+  @@unique([empresaId, anioMes])
+  @@map("meses")
+}
+
+model RegistroDia {
+  id              Int            @id @default(autoincrement())
+  empresaId       Int            @map("empresa_id")
+  repartidorId    Int            @map("repartidor_id")
+  fecha           DateTime       @db.Date
+  salida          Int?
+  vuelta          Int?
+  estado          EstadoRegistro @default(ok)
+  notaIa          String?        @map("nota_ia")
+  mensajeOriginal String?        @map("mensaje_original")
+  editadoManual   Boolean        @default(false) @map("editado_manual")
+  revisado        Boolean        @default(false)
+
+  repartidor Repartidor @relation(fields: [repartidorId], references: [id], onDelete: Cascade)
+
+  @@unique([repartidorId, fecha])
+  @@index([empresaId])
+  @@map("registros_dia")
+}
+
+model Ajuste {
+  id           Int     @id @default(autoincrement())
+  empresaId    Int     @map("empresa_id")
+  repartidorId Int     @map("repartidor_id")
+  mesId        Int     @map("mes_id")
+  concepto     String
+  // Positivo suma, negativo resta.
+  importe      Decimal @db.Decimal(10, 2)
+
+  repartidor Repartidor @relation(fields: [repartidorId], references: [id], onDelete: Cascade)
+  mes        Mes        @relation(fields: [mesId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@map("ajustes")
+}
+
+model Importacion {
+  id                    Int               @id @default(autoincrement())
+  empresaId             Int               @map("empresa_id")
+  repartidorId          Int?              @map("repartidor_id")
+  nombreArchivo         String            @map("nombre_archivo")
+  fecha                 DateTime          @default(now())
+  repartidorDetectado   String?           @map("repartidor_detectado")
+  estado                EstadoImportacion @default(PENDIENTE)
+  error                 String?
+
+  empresa    Empresa     @relation(fields: [empresaId], references: [id])
+  repartidor Repartidor? @relation(fields: [repartidorId], references: [id])
+
+  @@index([empresaId])
+  @@map("importaciones")
+}

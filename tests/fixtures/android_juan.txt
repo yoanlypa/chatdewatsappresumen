@@ -1,0 +1,20 @@
+01/09/26, 08:00 - Los mensajes y las llamadas están cifrados de extremo a extremo. Solo las personas en este chat pueden leerlos, enviarlos y escucharlos. Más información
+01/09/26, 08:05 - Carlos Jefe: Buenos días Juan, recuerda pasar por el almacén sur
+01/09/26, 21:15 - Juan Pérez: Salí con 120, volví con 8
+02/09/26, 21:30 - Juan Pérez: 130/12
+03/09/26, 20:58 - Juan Pérez: hoy 95 y vuelvo con 3
+04/09/26, 21:02 - Juan Pérez: Salí con 120 y volví con 5
+04/09/26, 21:03 - Juan Pérez: perdona, eran 118 no 120
+05/09/26, 21:40 - Juan Pérez: Hoy entregué 112 de 120
+05/09/26, 21:41 - Juan Pérez: <Multimedia omitido>
+06/09/26, 10:00 - Juan Pérez: Mañana llego tarde, tengo médico
+07/09/26, 21:10 - Juan Pérez: Salí con 100
+07/09/26, 21:11 - Juan Pérez: Se eliminó este mensaje
+07/09/26, 21:12 - Juan Pérez: volví con 4
+08/09/26, 21:20 - Carlos Jefe: ¿Qué tal hoy?
+08/09/26, 21:25 - Juan Pérez: Pues hoy ha sido duro:
+salí con 140
+y volví con 10
+10/09/26, 00:20 - Juan Pérez: ayer 110/6, perdona que se me olvidó
+11/09/26, 21:15 - Juan Pérez: Salí con 125, volví con 9 <Se editó este mensaje>
+01/10/26, 21:00 - Juan Pérez: Salí con 90, volví con 2
